@@ -62,7 +62,16 @@ console.log("-- Test 0 (Simple types) --");
   console.log('Check String as ADT: ', stringCheck(classCons.String(stringField)));
   console.log('Check Null as ADT: ', nullCheck(classCons.Null(nullField)));
   console.log('Check Undefined as ADT: ', undefinedCheck(classCons.Undefined(undefinedField)));
+})();
 
+
+console.log("-- Test 0.1 (Simple key in object test) --");
+(function(){
+  var 
+    myObj = { not_arrayField: [] },
+    myTypecheck = adt.typecheck(function(){ return this.Object({ arrayField: this.Array() }); });
+
+  console.log('Check object containing array: ', myTypecheck(myObj));
 })();
 
 console.log("-- Test 1 (Built-in types only (Arguments, Array, Boolean, Date, Error, Function, JSON, Math, Number, Object, RegExp, String, Null, Undefined)) --");
@@ -85,7 +94,7 @@ console.log("-- Test 1 (Built-in types only (Arguments, Array, Boolean, Date, Er
       undefinedField: (void 0)
     },
     myTypecheck = adt.typecheck(function(){
-      this.Object({
+      return this.Object({
         argumentsField: this.Arguments(),
         arrayField: this.Array(),
         booleanField: this.Boolean,
@@ -125,7 +134,7 @@ console.log("-- Test 2 (Nested primitive types only) --");
       }
     },
     myTypecheck = adt.typecheck(function(){
-      this.Object({
+      return this.Object({
         nestedArgumentsNumbers: this.Arguments(this.Number()),
         nestedArgumentsStringDate: this.Arguments([this.String(), this.Date()]),
         nestedArrayNumbers: this.Array(this.Number()),
