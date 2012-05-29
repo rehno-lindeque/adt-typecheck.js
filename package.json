@@ -1,0 +1,18 @@
+{
+  "author": "Rehno Lindeque <code@rehno.lindeque.name> (http://rehno.lindeque.name)",
+  "name": "adt-typecheck.js",
+  "description": "Type check your JavaScript data structures",
+  "version": "0.0.0",
+  "homepage": "https://github.com/rehno-lindeque/adt-typecheck.js",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/rehno-lindeque/adt-typecheck.js.git"
+  },
+  "main": "adt-typecheck",
+  "engines": {},
+  "dependencies": {
+    "adt.js": "git+ssh://git@github.com:rehno-lindeque/adt.js.git#master"
+  },
+  "devDependencies": {},
+  "optionalDependencies": {}
+}
