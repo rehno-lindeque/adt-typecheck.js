@@ -62,7 +62,7 @@
           Object: function(obj){
             var key, errors = [];
             for (key in objectDef) {
-              if (typeof obj[key] === 'undefined')
+              if (typeof obj[key] === 'undefined' && objectDef[key]._tag !== 'Undefined')
                 errors.push(typeError(adt.serialize(objectDef[key]), (void 0), key));
             }
             return errors;
