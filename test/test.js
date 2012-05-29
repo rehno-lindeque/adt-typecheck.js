@@ -101,7 +101,7 @@ console.log("-- Test 1 (Built-in types only (Arguments, Array, Boolean, Date, Er
       return this.Object({
         argumentsField: this.Arguments(),
         arrayField: this.Array(),
-        booleanField: this.Boolean,
+        booleanField: this.Boolean(),
         dateField: this.Date(),
         errorField: this.Error(),
         functionField: this.Function(),
