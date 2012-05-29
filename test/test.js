@@ -46,7 +46,7 @@ console.log("-- Test 0 (Simple types) --");
   console.log('Check Null built-in: ', nullCheck(nullField));
   console.log('Check Undefined built-in: ', undefinedCheck(undefinedField));
 
-  // Note that built-in types are differentiated from ADT's
+  // Note that built-in types are not differentiated from ADT's
   var classCons = adt.Class.constructors;
   console.log('Check Arguments as ADT: ', argumentsCheck(classCons.Arguments(argumentsField)));
   console.log('Check Array as ADT: ', arrayCheck(classCons.Array(arrayField)));

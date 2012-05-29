@@ -32,22 +32,48 @@
 
   // adt-typecheck.js
   var
+    classCons = adt.Class.constructors,
     typeError = function(expected, received, key) {
       if (key)
         return { key: key, expected: expected, received: received };
       else
         return { expected: expected, received: received };
-    };
+    },
+    typeErrorF = function(expected, key) {
+      return function(){ return [typeError(expected, this._tag, key)]; }
+    },
+    isClass = function(datatype) { 
+      var evals = { _: false };
+      evals[datatype] = function(a) { return this._datatype === datatype; };
+      return adt(evals); 
+    },
+    isObject = isClass('Object');
 
   adt.typecheck = function(schemaF) {
     var schema = schemaF.call(adt.Class.constructors);
     return adt({
+      // Check an Object's keys
+      Object: function(objectDef){
+        if (isObject(objectDef))
+          return this._(classCons.Object.apply(null, arguments));
+        return adt({
+          Object: function(obj){
+            var key, errors = [];
+            for (key in objectDef) {
+              if (typeof obj[key] === 'undefined')
+                errors.push(typeError(adt.serialize(objectDef[key]), (void 0), key));
+            }
+            return errors;
+          },
+          _: typeErrorF('Object')
+        });
+      },
+      // Check simple types simply
       _: function(){
         var
           expected = this._tag,
-          evals = {};
+          evals = { _: typeErrorF(expected) };
         evals[expected] = [];
-        evals['_'] = function(){ return [typeError(expected, this._tag)]; };
         return adt(evals);
       }
     })(schema);
