@@ -8,7 +8,7 @@
     "type": "git",
     "url": "git://github.com/rehno-lindeque/adt-typecheck.js.git"
   },
-  "main": "adt-typecheck",
+  "main": "./dist/adt-typecheck",
   "engines": {},
   "dependencies": {
     "adt.js": "git+ssh://git@github.com:rehno-lindeque/adt.js.git#master"
