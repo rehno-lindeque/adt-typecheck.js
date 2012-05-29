@@ -51,10 +51,12 @@
 
   adt.typecheck = function(schemaF) {
     var schema = schemaF.call(adt.Class.constructors);
+    if (schema == null)
+      throw "Invalid type definition: " + schema;
     return adt({
       // Check an Object's keys
       Object: function(objectDef){
-        if (isObject(objectDef))
+        if (!isObject(objectDef))
           return this._(classCons.Object.apply(null, arguments));
         return adt({
           Object: function(obj){
