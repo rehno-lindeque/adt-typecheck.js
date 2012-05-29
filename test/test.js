@@ -68,10 +68,14 @@ console.log("-- Test 0 (Simple types) --");
 console.log("-- Test 0.1 (Simple key in object test) --");
 (function(){
   var 
-    myObj = { not_arrayField: [] },
+    objWithArray = { arrayField: [] },
+    objWithoutArray = { stringField: "foo" },
+    objWithInvalidArray = { arrayField: "foo" },
     myTypecheck = adt.typecheck(function(){ return this.Object({ arrayField: this.Array() }); });
 
-  console.log('Check object containing array: ', myTypecheck(myObj));
+  console.log('Check object containing array: ', myTypecheck(objWithArray));
+  console.log('Check object not containing array: ', myTypecheck(objWithoutArray));
+  console.log('Check object containing invalid array field: ', myTypecheck(objWithInvalidArray));
 })();
 
 console.log("-- Test 1 (Built-in types only (Arguments, Array, Boolean, Date, Error, Function, JSON, Math, Number, Object, RegExp, String, Null, Undefined)) --");
