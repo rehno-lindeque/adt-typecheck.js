@@ -154,12 +154,12 @@ console.log("-- Test 2 (Nested primitive types only) --");
   console.log("Typecheck errors:", errors);
 })();
 
-console.log("-- Test 2 (Special types (Any, Optional, Nullable)) --");
+console.log("-- Test 3 (Special types (Any, Optional, Nullable)) --");
 (function(){
   console.warn("TODO");
 })();
 
-console.log("-- Test 3 (JavaScript primitive types with extras (Integer, JSONType)) --");
+console.log("-- Test 4 (JavaScript primitive types with extras (Integer, JSONType)) --");
 (function(){
   var myObj = {
     aNumber: 5.89,
@@ -173,12 +173,12 @@ console.log("-- Test 3 (JavaScript primitive types with extras (Integer, JSONTyp
   console.warn("TODO");
 })();
 
-console.log("-- Test 4 (Algebraic data types) --");
+console.log("-- Test 5 (Algebraic data types) --");
 (function(){
   console.warn("TODO");
 })();
 
-console.log("-- Test 3 (Additional predicates (lengthOf)) --");
+console.log("-- Test 6 (Additional predicates (lengthOf)) --");
 (function(){
   console.warn("TODO");
 })();
