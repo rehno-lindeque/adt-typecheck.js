@@ -89,3 +89,9 @@
   adt.typecheck = function(schemaF) {
     return typecheck(schemaF.call(adt.Class.constructors));
   };
+
+  adt.typecheck.show = function(error) {
+    if (Array.isArray(error))
+      return error.map(adt.typecheck.show);
+    return "Expected " + (typeof error['key'] === 'string'? error['key'] + " of type " : "type ")  + "'" + error['expected'] + "', but received '" + error['received'] + "'";
+  };

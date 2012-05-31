@@ -98,6 +98,12 @@ var adt = adt || (typeof require === 'function'? require('adt.js') : {});
   adt.typecheck = function(schemaF) {
     return typecheck(schemaF.call(adt.Class.constructors));
   };
+
+  adt.typecheck.show = function(error) {
+    if (Array.isArray(error))
+      return error.map(adt.typecheck.show);
+    return "Expected " + (typeof error['key'] === 'string'? error['key'] + " of type " : "type ")  + "'" + error['expected'] + "', but received '" + error['received'] + "'";
+  };
   // Export typecheck to a CommonJS module if exports is available
   if (typeof module !== "undefined" && module !== null)
     module.exports = adt.typecheck;

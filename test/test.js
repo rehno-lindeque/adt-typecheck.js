@@ -75,7 +75,9 @@ console.log("-- Test 0.1 (Simple key in object test) --");
 
   console.log('Check object containing array: ', myTypecheck(objWithArray));
   console.log('Check object not containing array: ', myTypecheck(objWithoutArray));
+  console.log('  Pretty printed: ', adt.typecheck.show(myTypecheck(objWithoutArray)[0]));
   console.log('Check object containing invalid array field: ', myTypecheck(objWithInvalidArray));
+  console.log('  Pretty printed: ', adt.typecheck.show(myTypecheck(objWithInvalidArray)[0]));
 })();
 
 console.log("-- Test 1 (Built-in types only (Arguments, Array, Boolean, Date, Error, Function, JSON, Math, Number, Object, RegExp, String, Null, Undefined)) --");
