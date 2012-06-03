@@ -148,7 +148,7 @@ var adt = adt || (typeof require === 'function'? require('adt.js') : {});
     return "Expected " + (typeof error['key'] === 'string'? error['key'] + " of type " : "type ")  + "'" + error['expected'] + "', but received '" + error['received'] + "'";
   };
   var isFunctionADT = adt({
-    Function: function() { return this.datatype === 'ADT'; },
+    Function: function() { return this._datatype === 'ADT'; },
     _: false
   });
 
@@ -158,7 +158,7 @@ var adt = adt || (typeof require === 'function'? require('adt.js') : {});
         throw "No type signature supplied to `adt.typecheck.signature.function`.";
       if (!f)
         throw "No function supplied to `adt.typecheck.signature.function`.";
-      var check = adt.typecheck(function(){ return this.Arguments(schemaF()); });
+      var check = adt.typecheck(function(){ return this.Arguments(schemaF.call(this)); });
       return function() {
         var errors = check(arguments);
         if (errors.length > 0)
@@ -174,7 +174,7 @@ var adt = adt || (typeof require === 'function'? require('adt.js') : {});
       var
         expectedNumArgs,
         check = adt.typecheck(function(){ 
-          var s = schemaF(); 
+          var s = schemaF.call(this);
           if (s.length < 1)
             throw "Too few arguments in chain function, a callback function is required.";
           if (!isFunctionADT(s[s.length - 1]))

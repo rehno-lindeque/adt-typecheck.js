@@ -188,10 +188,10 @@ console.log("-- Test 4 (Chain function signature) --");
     }
   );
 
-  console.log("Correct chained function call passing 2 arguments and a callback...")
+  console.log("Correct chained function call passing 3 arguments and a callback...")
   checkedChainFunc(5, "Hello", [], function(errors) { console.log("...returned errors: ", errors); })
 
-  console.log("Incorrect chained function call passing 2 arguments and a callback...")
+  console.log("Incorrect chained function call passing 3 arguments and a callback...")
   checkedChainFunc({}, 22.4, "**", function(errors) { console.log("...returned errors: ", errors); })
 
   console.log("Incorrect chained function call passing too few arguments...")
