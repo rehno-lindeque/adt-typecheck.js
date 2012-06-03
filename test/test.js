@@ -144,7 +144,7 @@ console.log("-- Test 2 (Nested primitive types only) --");
         nestedArgumentsNumbers: this.Arguments(this.Number()),
         nestedArgumentsStringDate: this.Arguments([this.String(), this.Date()]),
         nestedArrayNumbers: this.Array(this.Number()),
-        nestedArrayStringDate: this.Array(this.String(), this.Date()),
+        nestedArrayStringDate: this.Array([this.String(), this.Date()]),
         nestedObjectNumbers: this.Object(this.Number()),
         nestedObjectStringDate: this.Object({
           stringField: this.String(),
@@ -153,7 +153,7 @@ console.log("-- Test 2 (Nested primitive types only) --");
       });
     }),
     errors = myTypecheck(myObj);
-  console.log("Typecheck errors:", errors);
+  console.log("Typecheck errors: ", errors);
 })();
 
 console.log("-- Test 3 (Function signature) --");
@@ -172,7 +172,7 @@ console.log("-- Test 3 (Function signature) --");
 
   console.log("Incorrect function call...")
   try { checkedFunc("", {}, 5); }
-  catch(e) { console.log("Type error in checked function: ", e); }
+  catch(e) { console.log("Type errors in checked function:\n", e); }
 })();
 
 console.log("-- Test 4 (Chain function signature) --");
@@ -196,7 +196,7 @@ console.log("-- Test 4 (Chain function signature) --");
 
   console.log("Incorrect chained function call passing too few arguments...")
   try { checkedChainFunc("**", function(errors) { console.log("...returned errors: ", errors); }) }
-  catch(e) { console.log("Type error in checked chain function: ", e); }
+  catch(e) { console.log("Type errors in checked chain function:\n", e); }
 })();
 
 console.log("-- Test 4 (Special types (Any, Optional, Nullable)) --");

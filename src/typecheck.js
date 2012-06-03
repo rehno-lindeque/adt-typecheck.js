@@ -50,21 +50,26 @@
       evals[datatype] = function(a) { return this._datatype === datatype; };
       return adt(evals); 
     },
-    isObject = isClass('Object'),
+    isObjectClass = isClass('Object'),
+    isArgumentsClass = isClass('Arguments'),
     // Main type checker
     typecheck = function(schema, parentKey) {
       if (schema == null)
         throw "Invalid type definition: " + schema;
+      
+      // TODO: Refactor this into a more elegant structure...
       return adt({
         // Check an Object's keys
         Object: function(objectDef){
-          if (!isObject(objectDef))
-            return this._(classCons.Object.apply(null, arguments));
+          if (arguments.length > 1)
+            throw "Multiple arguments to Object type definition is not yet supported.";
+          if (!isObjectClass(objectDef))
+            return this._(classCons.Object(objectDef));
           return adt({
             Object: function(obj){
-              var key, errors = [], fullKey;
+              var key, fullKey, errors = [];
               for (key in objectDef) {
-                fullKey = key + (parentKey? '.' + parentKey : '');
+                fullKey = (parentKey? parentKey + '.' : '<Object>.') + key;
                 if (typeof obj[key] === 'undefined' && objectDef[key]._tag !== 'Undefined')
                   errors.push(typeError(adt.serialize(objectDef[key]), (void 0), fullKey));
                 else
@@ -73,6 +78,44 @@
               return errors;
             },
             _: typeErrorF('Object', parentKey)
+          });
+        },
+        // Check an Arguments's list 
+        Arguments: function(argumentsDef){
+          if (arguments.length > 1)
+            throw "Cannot pass multiple arguments to Arguments type definition.";
+          if (!Array.isArray(argumentsDef))
+            return this._(classCons.Arguments(argumentsDef));
+          return adt({
+            Arguments: function(args){
+              var i, typeDef, fullKey, errors = [];
+              for (i = 0; i < argumentsDef.length; ++i) {
+                typeDef = argumentsDef[i];
+                fullKey = (parentKey? parentKey : '<Arguments>') + '[' + String(i) + ']';
+                errors = errors.concat(typecheck(typeDef, fullKey)(args[i]));
+              }
+              return errors;
+            },
+            _: typeErrorF('Arguments', parentKey)
+          });
+        },
+        // Check an Array's list
+        Array: function(arrayDef){
+          if (arguments.length > 1)
+            throw "Cannot pass multiple arguments to Array type definition.";
+          if (!Array.isArray(arrayDef))
+            return this._(classCons.Array(arrayDef));
+          return adt({
+            Array: function(array){
+              var i, typeDef, fullKey, errors = [];
+              for (i = 0; i < arrayDef.length; ++i) {
+                typeDef = arrayDef[i];
+                fullKey = (parentKey? parentKey : '<Array>') + '[' + String(i) + ']';
+                errors = errors.concat(typecheck(typeDef, fullKey)(array[i]));
+              }
+              return errors;
+            },
+            _: typeErrorF('Arguments', parentKey)
           });
         },
         // Check simple types simply
