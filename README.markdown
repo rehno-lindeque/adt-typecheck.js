@@ -10,6 +10,16 @@ an [EDSL](http://en.wikipedia.org/wiki/Embedded_domain-specific_language)
 `adt.typecheck` is easiest to read using CoffeeScript shorthands. For this
 reason all of the examples here use CoffeeScript notation.
 
+Two words of warning:
+
+* Debugging wrapped up function calls can be painful. When debugging it is
+  occasionally helpful to comment out the signature to avoid stepping through lots
+  of this typechecking code.
+* **adt-typecheck.js** is designed for flexibility rather than performance,
+  especially since ADT's aren't natively implemented in JavaScript.
+  If JavaScript performance is an issue for you, you may want to reconsider
+  using a run-time typechecker.
+
 Also, please note that **adt-typecheck.js** does not have an official release
 yet. Parts of the API can and will change over time.
 
