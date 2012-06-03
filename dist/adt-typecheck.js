@@ -185,15 +185,19 @@ var adt = adt || (typeof require === 'function'? require('adt.js') : {});
       return function(){
         var 
           errors = check(arguments),
+          messages,
           callback;
         // It is not possible to pass along errors if no callback function is supplied
-        if (arguments.length !== expectedNumArgs)
-          throw "Incorrect number of arguments passed to the function." 
+        if (errors.length > 0) {
+          messages = adt.typecheck.show(errors);
+          if (arguments.length !== expectedNumArgs)
+            throw "Expected " + expectedNumArgs + " arguments, but received " + arguments.length + ".\n" + messages;
+          if (typeof arguments[arguments.length - 1] !== 'function')
+            throw messages;
+        }
         callback = arguments[arguments.length - 1];
-        if (typeof callback !== 'function')
-          throw "No callback function supplied."
         if (errors.length > 0)
-          callback(adt.typecheck.show(errors));
+          callback(messages);
         else
           f.apply(null, [].slice.call(arguments).concat([callback]));
       };
