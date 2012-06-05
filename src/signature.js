@@ -14,7 +14,7 @@
         var errors = check(arguments);
         if (errors.length > 0)
           throw adt.typecheck.show(errors).join('\n');
-        f.apply(null, arguments);
+        f.apply(this, arguments);
       };
     },
     chainFunction: function(schemaF, f) {
@@ -50,7 +50,7 @@
         if (errors.length > 0)
           callback(messages);
         else
-          f.apply(null, [].slice.call(arguments).concat([callback]));
+          f.apply(this, [].slice.call(arguments).concat([callback]));
       };
     }
   };
