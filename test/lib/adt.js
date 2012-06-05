@@ -180,7 +180,7 @@ var adt = (function() {
       // Create an identity constructor for the fall through pattern if none was supplied
       if (typeof selfProto['_'] === 'undefined') {
         selfProto['_'] = function(){
-          return this._datatype !== 'ADT'? arguments[0] : adt.construct.apply(null, [this._tag].concat([].slice.call(arguments, 0)));
+          return this._datatype !== 'ADT'? arguments[0] : construct(this._tag, arguments);
         },
         evaluators['_'] = function(){ return selfProto['_'].apply(evaluators, arguments); };
       }
@@ -226,13 +226,13 @@ var adt = (function() {
         var i, results = [], subResult;
         if (!isADT(data))
           return f(data);
-        for (i = 1; i < data.length; ++i) {
+        for (i = 0; i < data.length; ++i) {
           subResult = recurse(data[i]);
-          if (typeof subResult !== 'undefined')
-            results.push(subResult);
+          //if (typeof subResult !== 'undefined')
+          results.push(subResult);
         }
         // TODO: Take into account pattern matching requirements...
-        return f(construct(data[0], results));
+        return f(construct(data._tag, results));
     };
     // Assign all the methods in the interface to the recursive interface too
     // TODO: But shouldn't these methods also run recursively?
