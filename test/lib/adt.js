@@ -51,52 +51,15 @@ var adt = (function() {
       var str = Object.prototype.toString.call(data);
       return str.slice(str.indexOf(' ') + 1, str.length - 1);
     },
-    escapeString = function(str, escapes) {
-      var 
-        i, 
-        result = '',
-        replacement,
-        escapes = escapes || {
-          '\\': '\\\\',
-          '\"': '\\\"',
-          '\'': '\\\'',
-          '\t': '\\t',
-          '\r': '\\r',
-          '\n': '\\n'
-        };
-      for (i = 0; i < str.length; ++i) {
-        replacement = escapes[str[i]];
-        result += (replacement == null? str[i] : replacement);
-      }
-      return result;
+    getDataType = function(data) {
+      if (isADT(data)) return 'ADT'; else return getObjectType(data);
     },
-    unescapeString = function(str) {
-      var
-        i,
-        result = '',
-        escapes = {
-          '\\': '\\',
-          '\"': '\"',
-          '\'': '\'',
-          't': '\t',
-          'r': '\r',
-          'n': '\n'
-        };
-      for (i = 0; i < str.length - 1; ++i) {
-        if (str[i] !== '\\')
-          result += str[i];
-        else {
-          var replacement = escapes[str[i + 1]];
-          result += (replacement == null? str[i + 1] : replacement);
-          ++i;
-        }          
-      }
-      // Add the last character if it wasn't escaped
-      return i === str.length - 1? result + str[str.length - 1] : result;
+    getTypeTag = function(data) {
+      if (isADT(data)) return data._tag; else return getObjectType(data);
     };
   adt.isADT = isADT;
   adt.isInterface = isInterface;
-  var construct = function(tag, args) {
+  adt.version = "3.0.0";  var construct = function(tag, args) {
     // Make a shallow copy of args and patch on the tag
     var data = [].slice.call(args, 0);
     data._tag = tag;
@@ -109,7 +72,8 @@ var adt = (function() {
     return construct(tag, [].slice.call(arguments, 1));
   };*/
 
-  // ADT evaluators api
+  // ADT evaluators common
+  // ADT evaluators API (version 3)
   var 
     evaluators = function(selfProto) {
       var 
@@ -120,48 +84,14 @@ var adt = (function() {
           return evaluators._eval.apply(evaluators, arguments);
         };
 
-      var _eval = function(pattern, tag, datatype, args) {
-        // TODO (version 1.0 & 2.0): The first argument can be removed
-        // TODO (version 3.0): perform pattern matching
-        // E.g. split the data around whitespace and in order of specific to general...
-        var result;
-        evaluators._pattern = (pattern != null? pattern : (tag != null? tag : datatype));
-        evaluators._tag = (tag != null? tag : datatype);
-        evaluators._datatype = (datatype != null? datatype : 'ADT');
-        var f = evaluators[evaluators._pattern]; 
-        if (typeof f !== 'function')
-          f = evaluators['_'];
-        return f.apply(evaluators, args);
-      };
-
-      evaluators._eval = function(data) {
-        // Determine if the data is a construction (built by a constructor)
-        if (isADT(data)) {
-          /* TODO: (version 3.0): Construct a pattern for pattern matching
-          var
-            pattern = data[0],
-            i;
-          for (i = 1; i < data.length; ++i) {
-            if (isADT(data[i])) {
-              pattern = pattern.concat(' '.concat(data[i][0]));
-            else
-              pattern = pattern.concat(' '.concat(typeof data[i]));
-          }*/
-          return _eval(null, data._tag, 'ADT', data);
-        }
-        // Evaluate primitive type
-        return _eval(null, null, getObjectType(data), [data]);
-      };
-
-      /* TODO (version )?
-      // Iterate over an array of values (while carrying state, like a finite state machine)
-      // Similar to a haskell enumerator + iteratee with "map" as the enumerator and "iteratee" as the iteratee carying state
-      evaluators.mapIteratee = function() { console.log("mapIterate", arguments); return 0; };
-
-      // Similar to a haskell enumerator + iteratee with "fold" as the enumerator and "iteratee" as the iteratee carying state
-      evaluators.foldIteratee = function() { console.log("iterate", arguments); return 0; };
-      */
-
+      // Create an identity constructor for the fall through pattern if none was supplied
+      if (typeof selfProto['_'] === 'undefined') {
+        selfProto['_'] = function(){
+          return this._datatype !== 'ADT'? arguments[0] : construct(this._tag, arguments);
+        },
+        evaluators['_'] = function(){ return selfProto['_'].apply(evaluators, arguments); };
+      }
+        
       // Add adt constructors / methods to the evaluators
       for (tag in selfProto)
         switch(tag) {
@@ -177,17 +107,171 @@ var adt = (function() {
                 evaluators[tag] = (function(tag){ return function(){ return selfProto[tag]; }; })(tag);
             }
         }
-      // Create an identity constructor for the fall through pattern if none was supplied
-      if (typeof selfProto['_'] === 'undefined') {
-        selfProto['_'] = function(){
-          return this._datatype !== 'ADT'? arguments[0] : construct(this._tag, arguments);
-        },
-        evaluators['_'] = function(){ return selfProto['_'].apply(evaluators, arguments); };
+
+      /* METHOD 1 (FAST DISPATCH - TODO) Generate pattern matcher + dispatch function
+      var 
+        patternMatcher = "\"use strict\";\n",
+        merge = function(dict,k,v) { return dict[k] ? dict[k].push(v) : [v]; },
+        tuples = {},
+        variableTuples = false, // (Are there variable length tuples in the pattern?)
+        prevLength = null,
+        tuple,
+        i,
+        generateTupleMatcher = function(){
+        };
+      for (tag in evaluators)
+        switch(tag) {
+          case '_eval': continue;
+          default: 
+            tuple = tag.split(',');
+            merge(tuples, tuple.length, tuple);
+            variableTuples = (prevLength !== null && prevLength !== tuple.length);
+            prevLength = tuple.length;
+        }
+      if (variableTuples)
+        patternMatcher.concat("switch(arguments.length){\n")
+      for (i in tuples) {
+        if (variableTuples)
+          patternMatcher.concat("case " + i + ":\n");
+        patternMatcher.concat(generateTupleMatcher(tuples[i]));        
       }
-      
+      if (variableTuples)
+        patternMatcher.concat(
+          "default:\n"
+          + "return false;\n"
+          + "}\n")
+      //*/
+
+      //* METHOD 2 (FAST COMPILATION)
+      // Tokenize patterns into (length, (pattern,tuple))
+      var 
+        appendAt = function(dict,k,v) { 
+          if (dict[k]) dict[k].push(v); else dict[k] = [v]; 
+        },
+        pattern,
+        patternTuples = {};
+      for (pattern in evaluators)
+        switch(pattern) {
+          case '_eval': continue;
+          default: 
+            var tuple = pattern.split(',').map(function(s) { 
+              return s.split(' ').filter(function(s) { return s !== ''; }); 
+            });
+            appendAt(patternTuples, tuple.length, [pattern, tuple]);
+        }
+
+      // Order patternTuples in order from most specific to most general (order of patterns in evaluators cannot be relied upon)
+      (function(){
+        var l, pt;
+        for (l in patternTuples) {
+          pt = patternTuples[l];
+          pt.sort(function(a,b) {
+            // Pre-condition: a[1].length == b[1].length (patternTuples are already grouped by length)
+            var i,j;
+            for (i = 0; i < a[1].length; ++i) {
+              // Calculate relative generality of the two patterns
+              // 1. The most specific constructor is always the one with the largest number of arguments specified, even if they are wildcards...
+              //    I.e. The most general constructor is always the one with the fewest arguments specified...
+              if (a[1][i].length !== b[1][i].length)
+                return a[1][i].length > b[1][i].length? -1 : 1;
+              // 2. Wild card patterns > ADT > Everything else
+              for (j = 0; j < a[1][i].length; ++j) {
+                if (a[1][i][j] !== '_' && b[1][i][j] === '_')
+                  return -1; // a less general than b
+                if (a[1][i][j] === '_' && b[1][i][j] !== '_')
+                  return 1; // a more general than b
+                if (a[1][i][j] !== 'ADT' && b[1][i][j] === 'ADT')
+                  return -1; // a less general than b
+                if (a[1][i][j] === 'ADT' && b[1][i][j] !== 'ADT')
+                  return 1; // a more general than b
+              }
+            }
+            // 3. For the remainder, simply sort patterns alphabetically
+            return a[0] < b[0]? -1 : 1;
+          });
+        }
+      })();
+
+      var 
+        matchShallow = function(tag, datum) {
+          return tag === getTypeTag(datum) || tag == '_' || (isADT(datum) && tag == 'ADT');
+        },
+        matchCons = function(consPattern, datum) {
+          // Pre-condition: consPattern.length > 0
+          // The function returns a list of unboxed arguments to send to the evaluator
+          var i;
+          if (isADT(datum)) {
+            if (consPattern[0] == '_')
+              return datum.slice(0);
+            if (consPattern[0] !== datum._tag)
+              return null;
+            if (consPattern.length === 1)
+              return datum.slice(0);
+            for (i = 0; i < datum.length; ++i)
+              if (!matchShallow(consPattern[i + 1], datum[i]))
+                return null;
+            return datum.slice(0);
+          }
+          else if (consPattern.length === 1 
+              && (consPattern[0] === getObjectType(datum) || consPattern[0] === '_'))
+            return [datum];
+          return null;
+        },
+        matchTuple = function(tuplePattern, args) {
+          // Pre-condition: tuplePattern.length == args.length
+          var 
+            i,
+            d,
+            data = [];
+          for (i = 0; i < tuplePattern.length; ++i) {
+            d = matchCons(tuplePattern[i], args[i]);
+            if (d == null)
+              return null;
+            data = data.concat(d);
+          }
+          return {
+            data: data,
+            pattern: tuplePattern.map(function(s){ return s.join(' ') }).join(','),
+            datatype: Array.prototype.map.call(args, getDataType).join(','),
+            tag: Array.prototype.map.call(args, getTypeTag).join(','),
+          };
+        },
+        matcherFunc = function() {
+          var i, m, pt = patternTuples[arguments.length];
+          if (pt != null)
+            for (i = 0; i < pt.length; ++i) {
+              m = matchTuple(pt[i][1], arguments);
+              if (m != null) {
+                m.eval = evaluators[pt[i][0]];
+                // TODO: m.exactPattern = pt[i][0];
+                return m;
+              }
+            }
+          return null;
+        };
+      //*/
+
+      evaluators._eval = function() {
+        // Determine if the data is a construction (built by a constructor)
+        var i,
+          tags = [],
+          dataTypes = [];
+        
+        var m = matcherFunc.apply((void 0), arguments);
+        if (m == null) {
+          evaluators._pattern = '_';
+          evaluators._tag = Array.prototype.map.call(arguments, getTypeTag).join(',');
+          evaluators._datatype = Array.prototype.map.call(arguments, getDataType).join(',');
+          var data = Array.prototype.reduce.call(arguments, [], function(a,b){ return a.concat(isADT(b)? b : [b]); });
+          return evaluators._.apply(evaluators, data);
+        }
+        evaluators._pattern = m.pattern;
+        evaluators._tag = m.tag;
+        evaluators._datatype = m.datatype;
+        return m.eval.apply(evaluators, m.data);
+      };
       return evaluators;
     };
-
   // Automatically create constructors for any dispatch table
   adt.constructors = function(obj) {
     var key, keys = [];
@@ -222,22 +306,27 @@ var adt = (function() {
     return f;
   };
   adt.recursive = function(f) {
+    if (typeof f !== 'function')
+      throw "Expected a function or ADT interface in adt.recursive"
+    var self = isInterface(f)? f : adt({_: f});
+
     var recurse = function (data) {
         var i, results = [], subResult;
-        if (!isADT(data))
-          return f(data);
+        if (!isADT(data)) {
+          return self(data);
+        }
         for (i = 0; i < data.length; ++i) {
           subResult = recurse(data[i]);
           //if (typeof subResult !== 'undefined')
           results.push(subResult);
         }
         // TODO: Take into account pattern matching requirements...
-        return f(construct(data._tag, results));
+        return self(construct(data._tag, results));
     };
     // Assign all the methods in the interface to the recursive interface too
     // TODO: But shouldn't these methods also run recursively?
-    for (var key in f)
-      recurse[key] = f[key];
+    for (var key in self)
+      recurse[key] = self[key];
     return recurse;
   };
   // Create ADT's from an object's own property names (both enumerable + non-enumerable)
@@ -262,6 +351,32 @@ var adt = (function() {
 
   adt.serialize = function(data){
     var 
+      escapeString = function(str, escapes) {
+        var 
+          i, 
+          result = '',
+          replacement,
+          escapes = escapes || {
+            // Single-character escape codes (JavaScript -> Haskell)
+            '\0': '\\0',    // null character
+            //'\a': '\\a',  // alert            (n/a in JavaScript)
+            '\b': '\\b',    // backspace
+            '\f': '\\f',    // form feed
+            '\n': '\\n',    // newline (line feed)
+            '\r': '\\r',    // carriage return
+            '\t': '\\t',    // horizontal tab
+            '\v': '\\v',    // vertical tab
+            '\"': '\\\"',   // double quote
+            //'\&': '\\&',  // empty string     (n/a in JavaScript)
+            '\'': '\\\'',   // single quote
+            '\\': '\\\\'    // backslash
+          };
+        for (i = 0; i < str.length; ++i) {
+          replacement = escapes[str[i]];
+          result += (replacement == null? str[i] : replacement);
+        }
+        return result;
+      },
       escapes = {
         '\\': '\\\\',
         '\"': '\\\"',
@@ -290,16 +405,45 @@ var adt = (function() {
           }
           return str;
       },
+      serializeBuiltinEval = adt({
+        Array: function(a) { 
+          var 
+            i,
+            str ='[';
+          for (i = 0;; ++i) {
+            str += serializeEval(a[i]);
+            if (i === a.length - 1)
+              break;
+            str += ',';
+          }
+          str += ']'; 
+          return str;
+        },
+        Object: function(a) {
+          var 
+            i,
+            k = Object.keys(a),
+            str = '{';
+          for (i = 0;; ++i) {
+            str += escapeString(k[i], escapes) + ':' + serializeEval(a[k[i]]);
+            if (i === k.length - 1)
+              break;
+            str += ',';
+          }
+          str += '}';
+          return str;
+        }
+      }),
       // TODO: shorten this by using `compose`?
       serializeEval = adt({
         String: function(a) { return this._datatype === 'ADT'? serializeTagStruct('String', arguments) : '"' + a + '"'; },
         Number: function(a) { return this._datatype === 'ADT'? serializeTagStruct('Number', arguments) : String(a); },
         Boolean: function(a) { return this._datatype === 'ADT'? serializeTagStruct('Boolean', arguments) : (a? 'True' : 'False'); },
         // TODO: what about nested records, arrays and ADT's?
-        Array: function(a) { return this._datatype === 'ADT'? serializeTagStruct('Array', arguments) : '[' + String(a) + ']'; },
+        Array: function(a) { return this._datatype === 'ADT'? serializeTagStruct('Array', arguments) : serializeBuiltinEval(a); },
         Arguments: function(a) { return this._datatype === 'ADT'? serializeTagStruct('Arguments', arguments) : this([].slice.call(a, 0)); },
         // TODO: what about adt's nested inside the record...
-        Object: function(a) { return this._datatype === 'ADT'? serializeTagStruct('Object', arguments) : '"' + JSON.stringify(a) + '"'; },
+        Object: function(a) { return this._datatype === 'ADT'? serializeTagStruct('Object', arguments) : serializeBuiltinEval(a); },
         //SerializedADT: function(a) { return '(' + a + ')'; },
         _: function() {
           if (this._datatype !== 'ADT')
@@ -311,6 +455,115 @@ var adt = (function() {
     return serializeEval(data);
   };
   var 
+    unescapeString = function(str) {
+      var
+        i,
+        result = '',
+        escapes = {
+          // Single-character escape codes (Haskell -> JavaScript)
+          //'0': '\0',    // null character   (handled by numeric escape codes)
+          'a': '',        // alert            (n/a in javaScript)
+          'b': '\b',      // backspace
+          'f': '\f',      // form feed
+          'n': '\n',      // newline (line feed)
+          'r': '\r',      // carriage return
+          't': '\t',      // horizontal tab
+          'v': '\v',      // vertical tab
+          '\"': '\"',     // double quote
+          '&': '',        // empty string
+          '\'': '\'',     // single quote
+          '\\': '\\'      // backslash
+        };
+        /* ASCII control code abbreviations (Haskell -> JavaScript)
+        \NUL  U+0000  null character
+        \SOH  U+0001  start of heading
+        \STX  U+0002  start of text
+        \ETX  U+0003  end of text
+        \EOT  U+0004  end of transmission
+        \ENQ  U+0005  enquiry
+        \ACK  U+0006  acknowledge
+        \BEL  U+0007  bell
+        \BS U+0008  backspace
+        \HT U+0009  horizontal tab
+        \LF U+000A  line feed (newline)
+        \VT U+000B  vertical tab
+        \FF U+000C  form feed
+        \CR U+000D  carriage return
+        \SO U+000E  shift out
+        \SI U+000F  shift in
+        \DLE  U+0010  data link escape
+        \DC1  U+0011  device control 1
+        \DC2  U+0012  device control 2
+        \DC3  U+0013  device control 3
+        \DC4  U+0014  device control 4
+        \NAK  U+0015  negative acknowledge
+        \SYN  U+0016  synchronous idle
+        \ETB  U+0017  end of transmission block
+        \CAN  U+0018  cancel
+        \EM U+0019  end of medium
+        \SUB  U+001A  substitute
+        \ESC  U+001B  escape
+        \FS U+001C  file separator
+        \GS U+001D  group separator
+        \RS U+001E  record separator
+        \US U+001F  unit separator
+        \SP U+0020  space
+        \DEL  U+007F  delete
+        */
+        /* Control-with-character escapes (Haskell -> JavaScript)
+        \^@ U+0000  null character
+        \^A through \^Z U+0001 through U+001A control codes
+        \^[ U+001B  escape
+        \^\ U+001C  file separator
+        \^] U+001D  group separator
+        \^^ U+001E  record separator
+        \^_ U+001F  unit separator
+        */
+      for (i = 0; i < str.length - 1; ++i) {
+        if (str[i] !== '\\')
+          result += str[i];
+        else {
+          var 
+            s = str[i + 1],
+            replacement = escapes[s],
+            numStr = null,
+            radix = null;
+          if (replacement != null) {
+            result += replacement;
+            ++i;
+            continue;
+          }
+          // Parse numeric escapes
+          if (s >= '0' && s <= '9') {
+            numStr = (/[0-9]*/).exec(str.slice(i + 1))[0];
+            radix = 10; 
+          } else if (s == 'x') {
+            numStr = (/[0-9a-f]*/i).exec(str.slice(i + 2))[0];
+            radix = 16;
+          } else if (s == 'o') {
+            numStr = (/[0-7]*/).exec(str.slice(i + 2))[0];
+            radix = 8;
+          }
+          if (numStr != null && numStr.length > 0) {
+            var 
+              num = 0,
+              j;
+            for (j = 0; j < numStr.length; ++j) {
+              num *= radix;
+              num += parseInt(numStr[j], radix);
+            }
+            result += String.fromCharCode(num);
+            i += numStr.length + (s == 'x' || s == 'o'? 1 : 0);
+            continue;
+          }
+          // Direct single-character escape
+          result += str[i + 1];
+          ++i;
+        }
+      }
+      // Add the last character if it wasn't escaped
+      return i === str.length - 1? result + str[str.length - 1] : result;
+    },
     eatWhiteSpace = function(str) {
       for (var i = 0; i < str.length; ++i) {
         switch (str[i]) {
