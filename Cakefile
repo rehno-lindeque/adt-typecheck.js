@@ -1,11 +1,9 @@
 fs     = require 'fs'
-path   = require 'path'
 {exec} = require 'child_process'
 
 libFiles  = [
   # omit src/ and .js to make the below lines a little shorter
   'typecheck'
-  'signature'
 ]
 
 libPostfix = '-typecheck'
@@ -16,7 +14,7 @@ Build helpers (sequenced, composible)
 
 # Filename -> (Maybe (() -> IO) -> () -> IO) -> Maybe (() -> IO) -> () -> IO
 ifExists = (filename) -> (condCallback) -> (callback) -> -> 
-  path.exists filename, (exists) ->
+  fs.exists filename, (exists) ->
     if exists
       (condCallback callback)()
     else
@@ -57,9 +55,9 @@ build = (callback) -> (concatSrcFiles libFiles) (writeFile "build/adt#{libPostfi
 
 # Maybe (() -> IO) -> () -> IO
 minify = (callback) -> ->
-  path.exists 'node_modules/.bin/uglifyjs', (exists) ->
+  fs.exists 'node_modules/.bin/uglifyjs', (exists) ->
     tool = if exists then 'node_modules/.bin/uglifyjs' else 'uglifyjs'
-    path.exists "build/adt#{libPostfix}.js", (exists) ->
+    fs.exists "build/adt#{libPostfix}.js", (exists) ->
       if exists
         exec "#{tool} --no-copyright build/adt#{libPostfix}.js > build/adt#{libPostfix}.min.js", (err, stdout, stderr) ->
           throw err if err
@@ -77,18 +75,18 @@ wrap = (callback) ->
     #       or alternatively `(compose (compose f0) f1) f2` or `(f0.compose() f1).compose() f2`
 
     # Maybe (() -> IO) -> () -> IO
-    write = (callback) -> (concatFiles ['src/header.js', "build/#{filename}", 'src/footer.js']) (writeFile "dist/#{filename}") callback
-    writeMin = (callback) -> (concatFiles ['src/header.js', "build/#{filenameMin}", 'src/footer.js']) (writeFile "dist/#{filenameMin}") callback
+    _write = (callback) -> (concatFiles ['src/header.js', "build/#{filename}", 'src/footer.js']) (writeFile "dist/#{filename}") callback
+    _writeMin = (callback) -> (concatFiles ['src/header.js', "build/#{filenameMin}", 'src/footer.js']) (writeFile "dist/#{filenameMin}") callback
 
     # Maybe (() -> IO) -> () -> IO
-    wrap = (callback) -> write (logDone "adt#{libPostfix}.js") callback
-    wrapMin = (callback) -> writeMin (logDone "adt#{libPostfix}.min.js") callback
+    _wrap = (callback) -> _write (logDone "adt#{libPostfix}.js") callback
+    _wrapMin = (callback) -> _writeMin (logDone "adt#{libPostfix}.min.js") callback
 
     # Maybe (() -> IO) -> () -> IO
-    build = (ifExists "build/#{filename}") ((callback) -> wrap callback)
-    buildMin = (ifExists "build/#{filenameMin}") ((callback) -> wrapMin callback)
+    _build = (ifExists "build/#{filename}") ((callback) -> _wrap callback)
+    _buildMin = (ifExists "build/#{filenameMin}") ((callback) -> _wrapMin callback)
 
-    build buildMin callback
+    _build _buildMin callback
 
 ###
 Tasks
@@ -108,14 +106,12 @@ task 'fetch:npm', "Fetch the npm package manager", ->
     throw err if err
     console.log stdout + stderr
     console.log "...Done"
-    invokeNext()
 
 task 'fetch:uglifyjs', "Fetch the UglifyJS minification tool", ->
   exec "npm install uglify-js", (err, stdout, stderr) ->
     throw err if err
     console.log stdout + stderr
     console.log "...Done"
-    invokeNext()
 
 task 'minify', "Minify the resulting application file after build", ->
   exec "mkdir -p 'build'", (err, stdout, stderr) ->
