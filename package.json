@@ -11,7 +11,7 @@
   "main": "./dist/adt-typecheck",
   "engines": {},
   "dependencies": {
-    "adt.js": "git+http://github.com/rehno-lindeque/adt.js.git#master"
+    "adt.js": "git+https://github.com/rehno-lindeque/adt.js.git#master"
   },
   "devDependencies": {},
   "optionalDependencies": {}
